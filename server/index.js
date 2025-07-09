@@ -1,7 +1,6 @@
 import express from 'express';
 import http from "http";
 import { Server } from 'socket.io';
-import cors from 'cors'
 
 
 const app = express();
@@ -12,7 +11,8 @@ const io = new Server(server, {
     }
 })
 
-let isRommReseted = false;
+let isRoomReseted = {};//key-roomId, value-boolean if the room reseted
+let choosenWordArray = {};//key-roomId, value-boolean for each character
 
 let rooms = {} //tracks all the details of a room
 //rooms[roomId] = { players: [{id, name, score, pos}, {id, name, score, pos}], drawer: player[i], host: player[0], round: 0, maxRounds: n, correGuesses: 0 }
@@ -22,16 +22,16 @@ let roundTimers = {}//trancs if all the users guessed correctly then starts the 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 //when game over
-const handleGameOver = (roomId) => {
-    const room = rooms[roomId];
-    const players = room.players;
-    const winners = {}
-    for (const [player, index] of room.players) {
-        if (index >= 3) break;
-        winners.push(player)
-    }
-    io.to(roomId).emit('top_three_winners', { winners })
-}
+// const handleGameOver = (roomId) => {
+//     const room = rooms[roomId];
+//     const players = room.players;
+//     const winners = {}
+//     for (const [player, index] of room.players) {
+//         if (index >= 3) break;
+//         winners.push(player)
+//     }
+//     io.to(roomId).emit('top_three_winners', { winners })
+// }
 
 //function to handle each rounds of the game
 const handleNextRound = (roomId) => {
@@ -73,7 +73,7 @@ io.on('connection', (socket) => {
     //when a game starts
     socket.on('init_game', ({ roomId }) => {
         const room = rooms[roomId];
-        isRommReseted = false;
+        isRoomReseted[roomId] = false;
 
         if (room.players.length <= 1) {
             return
@@ -93,10 +93,41 @@ io.on('connection', (socket) => {
     socket.on('word_selected', ({ roomId, word }) => {
         io.to(roomId).emit('word_chosen', word);
 
-        //each round will go for 40sec, then next round will be started
-        roundTimers[roomId] = setTimeout(async () => {
+        choosenWordArray[roomId] = Array(word.length).fill(false)
+
+        //after 15sec reveal first word and emit this to all players
+        const timer1 = setTimeout(() => {
+            if(choosenWordArray[roomId].length > 1) choosenWordArray[roomId][1] = true;
+            else choosenWordArray[roomId][0] = true;
+            io.to(roomId).emit('hashArray_update', choosenWordArray[roomId]);
+        }, 20000);
+
+        //after 30sec reveal second character and emit this to all players
+        const timer2 = setTimeout(() => {
+            if(choosenWordArray[roomId].length > 2) {
+                if(word[2]!=' ') choosenWordArray[roomId][2] = true;
+                else choosenWordArray[roomId][0] = true;
+                io.to(roomId).emit('hashArray_update', choosenWordArray[roomId]);
+            }
+        }, 40000);
+
+        //if word length is greater than 8 then after 45sec reveal third character and emit
+        const timer3 = setTimeout(() => {
+            if(choosenWordArray[roomId].length > 8){
+                if(word[word.length-2]!=' ') choosenWordArray[roomId][word.length-2] = true;
+                else choosenWordArray[roomId][word.length-1]=true;
+                io.to(roomId).emit('hashArray_update', choosenWordArray[roomId]);
+            }
+        }, 57000);
+
+        //each round will go for 80sec, then next round will be started
+        const timer4 = setTimeout(async () => {
             const room = rooms[roomId]
             if (!room) return;
+
+            //reset the HashArray and emit
+            choosenWordArray[roomId]=[]
+            io.to(roomId).emit('hashArray_update', choosenWordArray[roomId]);
 
             rooms[roomId].round++;
 
@@ -116,7 +147,10 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('update_score', room.players)
             await sleep(7000)
             handleNextRound(roomId)
-        }, 30000);
+        }, 80000);
+
+        if(!roundTimers[roomId]) roundTimers[roomId]=[]
+        roundTimers[roomId].push(timer1, timer2, timer3, timer4);
     })
 
     //when score of a player is updated
@@ -145,9 +179,13 @@ io.on('connection', (socket) => {
         room.correctGuesses += 1;
         if (room.correctGuesses >= room.players.length - 1) {
             if (roundTimers[roomId]) {
-                clearTimeout(roundTimers[roomId]);
+                roundTimers[roomId].forEach(clearTimeout);
                 delete roundTimers[roomId];
             }
+
+            //reset the HashArray and emit
+            choosenWordArray[roomId]=[]
+            io.to(roomId).emit('hashArray_update', choosenWordArray[roomId]);
 
             rooms[roomId].round++;
 
@@ -198,9 +236,9 @@ io.on('connection', (socket) => {
         //     player.score = 0;
         //     player.pos = index + 1;
         // });
-        if (!isRommReseted) {
+        if (!isRoomReseted[roomId]) {
             room.players = [];
-            isRommReseted = true;
+            isRoomReseted[roomId] = true;
             room.drawer = null
             room.round = 1
             room.correctGuesses = 0
@@ -227,9 +265,11 @@ io.on('connection', (socket) => {
 
             if (rooms[roomId].players.length === 0) {
                 delete rooms[roomId];
+                delete choosenWordArray[roomId];
+                delete isRoomReseted[roomId];
                 // console.log("room deleted")
                 if (roundTimers[roomId]) {
-                    clearTimeout(roundTimers[roomId])
+                    roundTimers[roomId].forEach(clearTimeout)
                     delete roundTimers[roomId];
                 }
             }

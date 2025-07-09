@@ -26,9 +26,12 @@ const Room = () => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [maxRounds, setMaxRounds] = useState(3);
   const [showTimer, setShowTimer] = useState(false);
-  const [currTime, setCurrTime] = useState(30);
+  const [currTime, setCurrTime] = useState(80);
   const [started, setStarted] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [isWordChosing, setIsWordChosing] = useState(false);
+  const [showWordsInNavbar, setShowWordsInNavbar] = useState(false);
+  const [hashArray, setHashArray] = useState([]);
 
   const navigate = useNavigate();
 
@@ -55,9 +58,10 @@ const Room = () => {
       // console.log(data.id, " ", socket.id)
     });
     socket.on('new_round', (round) => {
+      setShowWordsInNavbar(false);
       setIsShowingNewScore(false);
       setCurrRound(round);
-      setCurrTime(30);
+      setCurrTime(80);
       setShowTimer(false);
     });
     socket.on('update_score', (data) => {
@@ -90,6 +94,17 @@ const Room = () => {
       setShowTimer(false);
       // console.log("isHost: ", isHost)
     });
+    socket.on('word_chosen', (word) => {
+      setIsCorrect(false);
+      setShowWordsInNavbar(true);
+      setRoundStartTime(Date.now());
+      setIsWordChosing(false);
+      setChosenWord(word);
+      setShowTimer(true);
+    });
+    socket.on('hashArray_update', (newHashArray) => {
+      setHashArray(newHashArray);
+    })
 
     return () => {
       socket.off('players_update');
@@ -99,6 +114,8 @@ const Room = () => {
       socket.off('update_score');
       socket.off('room_reset');
       socket.off('game_over');
+      socket.off('word_chosen');
+      socket.off('hashArray_update');
     };
   }, []);
 
@@ -170,7 +187,7 @@ const Room = () => {
             </button>
             <button
               onClick={() => {
-                socket.disconnect()
+                // socket.disconnect()
                 navigate('/lobby-join')
               }}
               className="px-4 py-2 rounded-lg border-2 bg-[#00f5d4] text-black hover:bg-[#00e5c0] border-[#00f5d4] transition duration-200">
@@ -184,6 +201,7 @@ const Room = () => {
       {isShowingNewScore && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 flex justify-center items-center z-50 animate-fadeIn">
           <div className="bg-[#1e1e2f] p-5 rounded-lg shadow-lg text-center max-w-md w-full mx-2 border-2 border-[#00f5d4]">
+            <h2 className="text-xl font-bold mb-3 text-[#00f5d4]">Word: {chosenWord}</h2>
             <h2 className="text-xl font-bold mb-3 text-[#00f5d4]">Current Scoreboard</h2>
             <ul className="w-full">
               <li className="grid grid-cols-3 gap-4 font-bold text-sm md:text-lg border-b pb-1 mb-1 text-white">
@@ -217,10 +235,21 @@ const Room = () => {
       </div>
 
       {/* Round Info */}
-      <div className="text-xl px-2 font-bold min-h-[8vh] w-full my-5 border-2 border-[#00f5d4] rounded-lg flex justify-around items-center bg-[#0f3460] text-white">
-        <h1>Round {currRound} out of {maxRounds}</h1>
-        {showTimer && (
-          <h1>Time Left: {currTime}s</h1>
+      <div className="text-[15px] md:text-2xl px-2 py-1 font-bold min-h-[5vh] w-full my-3 md:my-5 border-2 border-[#00f5d4] rounded-lg bg-[#0f3460] text-white">
+        <div className='flex justify-around items-center'>
+          <h1>Round {currRound} of {maxRounds}</h1>
+          {showTimer && (
+            <h1>Time Left: {currTime}s</h1>
+          )}
+        </div>
+        {showWordsInNavbar && (
+          <div className='flex justify-center gap-2'>
+            {chosenWord?.split('').map((char, ind) => (
+              <span key={ind} className={char === ' ' ? 'w-4' : 'border-b-2 border-white px-1'}>
+                {char === ' ' ? '\u00A0' : ((hashArray[ind] || isDrawer || isCorrect) ? char : '')}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
@@ -231,6 +260,8 @@ const Room = () => {
         </div>
         <div className="w-full lg:w-[50%] flex justify-around lg:justify-between items-center gap-4">
           <Players
+            isWordChosing={isWordChosing}
+            setIsWordChosing={setIsWordChosing}
             started={started}
             setStarted={setStarted}
             isHost={isHost}

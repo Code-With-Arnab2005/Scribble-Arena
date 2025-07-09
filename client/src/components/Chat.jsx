@@ -34,7 +34,7 @@ const Chat = ({ messages, setMessages, isCorrect, setIsCorrect, players, roundSt
         play_sound('/correct_guess.mp3')
         setIsCorrect(true);
 
-        const maxScore = 500, roundDuration = 20000;
+        const maxScore = 500, roundDuration = 80000;
         const elapsedTime = Date.now() - roundStartTime;
         const timeLeft = Math.max(0, roundDuration - elapsedTime);
         const guesserScore = Math.floor((timeLeft / roundDuration) * maxScore);
@@ -53,7 +53,7 @@ const Chat = ({ messages, setMessages, isCorrect, setIsCorrect, players, roundSt
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`mb-1 text-sm px-2 py-1 rounded-md ${
+            className={`mb-1 text-sm px-2 py-1 rounded-md overflow-y-scroll ${
               m.message === chosenWord ? 'bg-green-500 text-black font-bold animate-pulse' : ''
             }`}
           >

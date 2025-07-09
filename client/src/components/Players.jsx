@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { play_sound, preload_sound } from '../utils/utils';
 import randomPictionary from 'word-pictionary-list';
 
-const Players = ({ started, setStarted, isHost, setShowTimer, setIsCorrect, setRoundStartTime, players, setIsDrawer, chosenWord = '', setChosenWord }) => {
+const Players = ({ isWordChosing, setIsWordChosing, started, setStarted, isHost, setShowTimer, setIsCorrect, setRoundStartTime, players, setIsDrawer, chosenWord = '', setChosenWord }) => {
   const username = useSelector((state) => state.user.username);
   const roomId = useSelector((state) => state.room.roomId);
 
@@ -16,7 +16,7 @@ const Players = ({ started, setStarted, isHost, setShowTimer, setIsCorrect, setR
   
   const [showWords, setShowWords] = useState(false);
   const [selectedWord, setSelectedWord] = useState('');
-  const [isWordChosing, setIsWordChosing] = useState(false);
+  
   const [wordOptions, setWordOptions] = useState([]);
 
   useEffect(() => {
@@ -29,33 +29,30 @@ const Players = ({ started, setStarted, isHost, setShowTimer, setIsCorrect, setR
     socket.on('drawer_selected', (data) => {
       setIsWordChosing(true);
       const words = randomPictionary(4).map(word =>word.toLowerCase())
+      // console.log("player words: ", words)
       setWordOptions(words)
       // console.log(generate(4))
       if (socket.id === data.id) {
         setIsDrawer(true);
         setShowWords(true);
+        // console.log("players woreOptions: ", wordOptions)
         timeoutRef.current = setTimeout(() => {
           setShowWords(false);
           setSelectedWord(wordOptions[0]);
-          seletedWordRef.current = wordOptions[0];
+          seletedWordRef.current = words[0];
+          // console.log("players word selected: ", words[0]);
           socket.emit('word_selected', { roomId, word: seletedWordRef.current });
         }, 10000);
       } else {
         setIsDrawer(false);
       }
     });
-    socket.on('word_chosen', (word) => {
-      setIsCorrect(false);
-      setRoundStartTime(Date.now());
-      setIsWordChosing(false);
-      setChosenWord(word);
-      setShowTimer(true);
-    });
+    
 
     return () => {
       socket.off('game_started');
       socket.off('drawer_selected');
-      socket.off('word_chosen');
+      
     };
   }, []);
 
@@ -115,7 +112,7 @@ const Players = ({ started, setStarted, isHost, setShowTimer, setIsCorrect, setR
             <div className="flex items-center gap-2">
               <p>{player.name}</p>
               {socket.id === player.id && (
-                <span className="px-2 pb-[1px] bg-[#ffb703] text-black rounded-lg text-[8px] md:text-[12px]">
+                <span className="md:px-2 pb-[1px] px-1 bg-[#ffb703] text-black rounded-lg text-[6px] md:text-[12px]">
                   <strong>You</strong>
                 </span>
               )}
