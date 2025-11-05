@@ -111,6 +111,7 @@ This project is licensed under the MIT License – see LICENSE for details.
 ### 👨‍💻 Author
 Arnab Bhattacharya
 3rd Year B.Tech CSE | MERN & AI Developer
-🌐 [LinkedIn Profile]([https://www.linkedin.com/in/arnab-bhattacharya](https://www.linkedin.com/in/arnab-bhattacharya-42216a320/)) • 💻 [LinkedIn Profile]([https://www.linkedin.com/in/arnab-bhattacharya](https://github.com/Code-With-Arnab2005))
+🌐 [LinkedIn Profile](https://www.linkedin.com/in/arnab-bhattacharya-42216a320/) • 💻 [Github Profile](https://github.com/Code-With-Arnab2005)
 
 <p align="center"> ⭐ If you like this project, consider giving it a star! ⭐ </p>
+
