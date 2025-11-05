@@ -89,7 +89,12 @@ After time runs out, the next round begins.
 Highest scorer wins 🏅!
 
 ### 📸 Screenshots
-<p align="center"> <img src="https://drive.google.com/file/d/1eNZROlUhE61Dg5Fsd11RAAjyI2ImLTkh/view?usp=drive_link" alt="Lobby Screenshot" /> <img src="https://drive.google.com/file/d/1eNZROlUhE61Dg5Fsd11RAAjyI2ImLTkh/view?usp=drive_link" alt="Drawing Board Screenshot" /> </p>
+<p align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1eNZROlUhE61Dg5Fsd11RAAjyI2ImLTkh" alt="Lobby Screenshot" width="45%" />
+  &nbsp;
+  <img src="https://drive.google.com/uc?export=view&id=1eNZROlUhE61Dg5Fsd11RAAjyI2ImLTkh" alt="Drawing Board Screenshot" width="45%" />
+</p>
+
 
 ### 🧠 Key Learnings
 Built real-time systems using Socket.io rooms
@@ -114,5 +119,6 @@ Arnab Bhattacharya
 🌐 [LinkedIn Profile](https://www.linkedin.com/in/arnab-bhattacharya-42216a320/) • 💻 [Github Profile](https://github.com/Code-With-Arnab2005)
 
 <p align="center"> ⭐ If you like this project, consider giving it a star! ⭐ </p>
+
 
 
